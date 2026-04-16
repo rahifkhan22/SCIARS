@@ -77,7 +77,6 @@ export default function ReportIssue() {
         userId: user.email,
         category: mapCategory(formData.category),
         description: formData.description,
-        imageUrl: "https://via.placeholder.com/150",
         lat: 17.3850,
         lng: 78.4867,
         locationText: formData.location
@@ -96,7 +95,8 @@ export default function ReportIssue() {
       navigate("/user");
     } catch (err) {
       console.error(err);
-      alert("Failed to submit issue to backend.");
+      const msg = err?.response?.data?.detail?.message || err?.response?.data?.detail || "Failed to submit issue to backend.";
+      alert(msg);
       setIsSubmitting(false);
     }
   };
