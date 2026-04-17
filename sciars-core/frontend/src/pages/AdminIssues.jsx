@@ -311,7 +311,7 @@ export default function AdminIssues() {
                                   <img src={issue.supervisorPhoto} alt="Supervisor" className="w-16 h-16 rounded-full border border-gray-300 object-cover" />
                                 </div>
                               )}
-                              {issue.proofImageUrl && (
+                              {issue.proofImageUrl && issue.status !== 'Resolved' && (
                                 <div>
                                   <p className="text-xs text-gray-500 mb-1">Proof Photo</p>
                                   <img src={issue.proofImageUrl} alt="Proof" className="max-h-24 rounded-lg border border-green-200 object-cover" />
