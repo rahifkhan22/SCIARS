@@ -1,11 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import NotificationBell from './NotificationBell';
+import AdminNotificationBell from './AdminNotificationBell';
+import { getIssues } from '../services/api';
 
 const NavbarAdmin = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const adminEmail = useMemo(() => {
+    try {
+      const session = localStorage.getItem('session_admin');
+      if (session) {
+        const data = JSON.parse(session);
+        return data.email || 'admin@sciars.edu';
+      }
+    } catch {}
+    return 'admin@sciars.edu';
+  }, []);
 
   const isActive = (path) => location.pathname === path;
 
@@ -66,7 +78,7 @@ const NavbarAdmin = () => {
 
           {/* Right side: Bell + Logout */}
           <div className="flex items-center gap-3">
-            <NotificationBell userId="admin@sciars.edu" />
+            <AdminNotificationBell />
 
             {/* Logout */}
             <button
