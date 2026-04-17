@@ -91,6 +91,7 @@ export default function ReportIssue() {
     if (!formData.category) newErrors.category = "Please select a category";
     if (!formData.college) newErrors.location = "Please select a college";
     if (!formData.locationText.trim()) newErrors.location = "Location description is required";
+    if (!formData.image) newErrors.image = "Image is required";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -341,10 +342,10 @@ export default function ReportIssue() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Upload Image (Optional)
+                Upload Image <span className="text-red-500">*</span>
               </label>
               <div className={`relative border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-                imagePreview ? "border-primary-300 bg-primary-50" : "border-gray-300 hover:border-gray-400"
+                imagePreview ? "border-primary-300 bg-primary-50" : errors.image ? "border-red-400 bg-red-50" : "border-gray-300 hover:border-gray-400"
               }`}>
                 {imagePreview ? (
                   <div className="relative inline-block z-10">
@@ -391,6 +392,7 @@ export default function ReportIssue() {
                   Take Photo
                 </button>
               )}
+              {errors.image && <p className="mt-2 text-sm text-red-500">{errors.image}</p>}
             </div>
             <CameraCapture
               isOpen={showCamera}
