@@ -13,6 +13,7 @@ export default function DashboardUser() {
   const [selectedIssue, setSelectedIssue] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedCollege, setSelectedCollege] = useState("");
+  const [locationModal, setLocationModal] = useState(null);
 
   const [issues, setIssues] = useState([]);
   const [notifications, setNotifications] = useState([]);
@@ -422,7 +423,119 @@ export default function DashboardUser() {
                 <p className="text-sm text-gray-700">{selectedIssue.location?.text || "Not specified"}</p>
               </div>
 
+              {/* Coordinates */}
+              {selectedIssue.location?.lat && selectedIssue.location?.lng && (
+                <div>
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Coordinates</p>
+                  <button
+                    onClick={() => setLocationModal(selectedIssue.location)}
+                    className="text-sm text-primary-600 hover:text-primary-800 font-mono flex items-center gap-1"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    {selectedIssue.location.lat.toFixed(5)}, {selectedIssue.location.lng.toFixed(5)}
+                  </button>
+                </div>
+              )}
+
+              {/* College */}
+              {selectedIssue.college && (
+                <div>
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">College</p>
+                  <p className="text-sm text-gray-700">{selectedIssue.college}</p>
+                </div>
+              )}
+
+              {/* Reported Date & Time */}
+              {selectedIssue.createdAt && (
+                <div>
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Reported On</p>
+                  <p className="text-sm text-gray-700">
+                    {new Date(selectedIssue.createdAt).toLocaleDateString('en-IN', { 
+                      day: '2-digit', month: 'long', year: 'numeric' 
+                    })} at {new Date(selectedIssue.createdAt).toLocaleTimeString('en-IN', { 
+                      hour: '2-digit', minute: '2-digit' 
+                    })}
+                  </p>
+                </div>
+              )}
+
+              {/* Image */}
+              {selectedIssue.imageUrl && (
+                <div>
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Photo</p>
+                  <img 
+                    src={selectedIssue.imageUrl} 
+                    alt="Issue" 
+                    className="w-full h-40 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={() => setLocationModal({ imageUrl: selectedIssue.imageUrl })}
+                  />
+                </div>
+              )}
+
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Location Map Modal */}
+      {locationModal && locationModal.lat && locationModal.lng && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80"
+          onClick={() => setLocationModal(null)}
+        >
+          <div className="relative max-w-3xl max-h-[90vh] w-full bg-white rounded-xl overflow-hidden">
+            <button
+              onClick={() => setLocationModal(null)}
+              className="absolute top-3 right-3 z-10 p-2 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-colors"
+            >
+              <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <div className="p-2">
+              <MapView 
+                issues={[ { 
+                  id: 'selected', 
+                  location: { lat: locationModal.lat, lng: locationModal.lng, text: locationModal.text },
+                  status: 'Open'
+                }]} 
+                center={[locationModal.lat, locationModal.lng]}
+                zoom={17}
+                className="h-[60vh]"
+              />
+            </div>
+            {locationModal.text && (
+              <div className="p-4 border-t border-gray-200">
+                <p className="text-sm text-gray-600">{locationModal.text}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Image Modal */}
+      {locationModal && locationModal.imageUrl && !locationModal.lat && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80"
+          onClick={() => setLocationModal(null)}
+        >
+          <div className="relative max-w-4xl max-h-[90vh] w-full">
+            <button
+              onClick={() => setLocationModal(null)}
+              className="absolute -top-10 right-0 text-white hover:text-gray-300 transition-colors"
+            >
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <img 
+              src={locationModal.imageUrl} 
+              alt="Issue" 
+              className="max-w-full max-h-[85vh] mx-auto rounded-lg shadow-2xl"
+            />
           </div>
         </div>
       )}
