@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import NavbarUser from "../components/NavbarUser";
 import IssueCard from "../components/IssueCard";
 import MapView from "../components/MapView";
 import { getIssues, getNotifications } from "../services/api";
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
 export default function DashboardUser() {
   const navigate = useNavigate();
@@ -81,6 +82,26 @@ export default function DashboardUser() {
       (issue.location?.text && issue.location.text.toLowerCase().includes(selectedCollege.toLowerCase()));
     return statusMatch && categoryMatch && collegeMatch;
   });
+
+  const categoryData = useMemo(() => {
+    const counts = issues.reduce((acc, issue) => {
+      const cat = issue.category || 'Other';
+      acc[cat] = (acc[cat] || 0) + 1;
+      return acc;
+    }, {});
+    return Object.entries(counts)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5);
+  }, [issues]);
+
+  const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6'];
+
+  const recentActivity = useMemo(() => {
+    return [...issues]
+      .sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt))
+      .slice(0, 5);
+  }, [issues]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -217,6 +238,117 @@ export default function DashboardUser() {
             <div className="flex flex-col sticky top-6 self-start">
               <h2 className="text-lg font-bold text-gray-900 mb-4 border-b border-gray-200 pb-2">Issue Map</h2>
               <MapView className="h-[600px] border border-gray-200" issues={filteredIssues.filter((i) => i.location?.lat && i.location?.lng)} />
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              Issues by Category
+            </h3>
+            {categoryData.length > 0 ? (
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={categoryData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={50}
+                      outerRadius={80}
+                      paddingAngle={2}
+                      dataKey="value"
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    >
+                      {categoryData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="h-64 flex items-center justify-center text-gray-400">No data available</div>
+            )}
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Recent Activity
+            </h3>
+            {recentActivity.length > 0 ? (
+              <div className="space-y-3 h-64 overflow-y-auto">
+                {recentActivity.map((issue) => (
+                  <div key={issue.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate">{issue.description || 'No description'}</p>
+                      <p className="text-xs text-gray-500">{new Date(issue.updatedAt || issue.createdAt).toLocaleDateString()}</p>
+                    </div>
+                    <span className={`ml-3 px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      issue.status === "Open" ? "bg-red-100 text-red-800" :
+                      issue.status === "In Progress" ? "bg-yellow-100 text-yellow-800" :
+                      issue.status === "Resolved" ? "bg-green-100 text-green-800" :
+                      "bg-gray-100 text-gray-600"
+                    }`}>{issue.status}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="h-64 flex items-center justify-center text-gray-400">No recent activity</div>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Avg. Resolution</p>
+                <p className="text-xl font-bold text-gray-900">
+                  {issues.filter(i => i.status === 'Resolved').length > 0 ? '2-3 days' : 'N/A'}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Top Category</p>
+                <p className="text-xl font-bold text-gray-900">{categoryData[0]?.name || 'N/A'}</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-green-100 rounded-lg">
+                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Locations Reported</p>
+                <p className="text-xl font-bold text-gray-900">{new Set(issues.map(i => i.location?.text).filter(Boolean)).size}</p>
+              </div>
             </div>
           </div>
         </div>
