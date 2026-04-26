@@ -1,4 +1,4 @@
-# SCIARS - Smart City Issue and Resolution System
+# SCIARS - Smart Campus Issue and Resolution System
 
 A full-stack web application for reporting, tracking, and resolving civic issues using geolocation, role-based dashboards, and real-time notifications.
 
